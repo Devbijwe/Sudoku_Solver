@@ -5,8 +5,7 @@ from wtforms import TextAreaField
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'
 
-class SudokuForm(FlaskForm):
-    puzzle = TextAreaField('Sudoku Puzzle')
+
 
 @app.route('/')
 def index():
@@ -17,8 +16,8 @@ def index():
     size_options = [4, 9, 16, 25, 36, 40]  # Add more size options as needed
     selected_size = size  # The selected size will be the current 'size'
 
-    form = SudokuForm()
-    return render_template('index.html', form=form, size_options=size_options, selected_size=selected_size)
+    
+    return render_template('index.html',  size_options=size_options, selected_size=selected_size)
 
 
 class CSP:
