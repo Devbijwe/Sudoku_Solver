@@ -37,7 +37,8 @@ td {
     justify-content: center;
 }
 
-button {
+button,
+.size-button {
     margin-top: 15px;
     font-size: 1.5em;
     background-color: #A288E3;
@@ -46,9 +47,11 @@ button {
     border: #A288E3;
     border-radius: 5px;
     padding: 5px 10px;
+    text-decoration: none;
 }
 
-button:hover {
+button:hover,
+.size-button:hover {
     color: #A288E3;
     background-color: white;
     outline: #A288E3;
@@ -63,7 +66,20 @@ button:hover {
     table {
         font-size: 1.5em;
     }
-    button {
+    button,
+    .size-button {
         font-size: 1rem;
     }
+}
+
+.solved {
+    color: green;
+    /* You can use a different color or style */
+    font-weight: bold;
+    /* Add any other styles you want for solved digits */
+}
+
+.user-input {
+    background-color: #e0e0e0;
+    /* You can choose a different background color */
 }

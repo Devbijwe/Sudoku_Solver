@@ -3,11 +3,10 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta http-equiv="X-UA-Compatible" content="IE-edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sudoku Solver</title>
     <link rel="stylesheet" href="static/styles.css">
-
 </head>
 
 <body>
@@ -15,28 +14,37 @@
         <h1 class="padd">Sudoku Solver</h1>
         <form id="sudoku-form">
             <label for="sudoku-size">Select Sudoku Board Size:</label>
-            <select id="sudoku-size">
-                {% for option in size_options %}
-                    <option value="{{ option }}" {% if selected_size == option %}selected{% endif %}>{{ option }}x{{ option }}</option>
-                {% endfor %}
-            </select>
-
-
+            <div class="relative ">
+                <button id="sudoku-size-button" style="margin-bottom: 10px;" class="border border-gray-300 px-4 py-2 rounded text-black">
+                    {{ selected_size }}x{{ selected_size }}
+                </button>
+                <div id="sudoku-size-options" class="hidden absolute z-10 right-0 mt-2 py-2 w-32 bg-white rounded border border-gray-300">
+                    {% for option in size_options %}
+                    <a class="size-button" href="{{ url_for('home', selected_size=option) }}" class="block w-full text-left px-4 py-2 hover:bg-blue-100">{{ option }}x{{ option }}
+                    </a> {% endfor %}
+                </div>
+            </div>
             <br>
-            <table id="sudoku-board" class="table-auto mx-auto">
-                <colgroup id="colgroup"></colgroup>
-                <tbody>
-                    {% for row in range(selected_size) %}
-                    <tr>
-                        {% for col in range(selected_size) %}
-                        <td contenteditable="true" class="w-10 h-10 text-center border border-gray-300 rounded focus:ring-2 focus:ring-blue-300 focus:outline-none" pattern="[1-9]" title="Please enter a single digit between 1 and 9">
-                        </td>
+            <div class="flex flex-wrap" style="display: flex; flex: 1 1 0%;">
+                <table id="sudoku-board" class="table-auto mx-auto">
+                    <tbody>
+                        {% for row in range(selected_size) %}
+                        <tr>
+                            {% for col in range(selected_size) %}
+                            <td contenteditable="true" class="" pattern="[1-9]" title="Please enter a single digit between 1 and 9">
+                            </td>
+                            {% endfor %}
+                        </tr>
                         {% endfor %}
-                    </tr>
-                    {% endfor %}
-                </tbody>
-
-            </table>
+                    </tbody>
+                </table>
+                <table id="solution-board" class="table-auto mx-auto">
+                    <colgroup id="colgroup-solution"></colgroup>
+                    <tbody>
+                        <!-- Use placeholders for solution cells -->
+                    </tbody>
+                </table>
+            </div>
             <div class="btns">
                 <div>
                     <button id="solve-button" type="button">Solve</button>
@@ -48,35 +56,8 @@
         </form>
         <div id="solution" class="text-center font-bold mt-4"></div>
     </div>
-    <script>
-        const select = document.getElementById("sudoku-size");
-        select.addEventListener("change", function() {
-            const selectedSize = select.value;
-            window.location.href = `/?size=${selectedSize}`;
-        });
-    </script>
-
 
     <script>
-        document.getElementById("sudoku-size").addEventListener("change", function() {
-            var size = this.value;
-            var colgroup = document.getElementById("colgroup");
-            colgroup.innerHTML = ""; // Clear existing columns
-
-            for (let i = 0; i < size; i++) {
-                var col = document.createElement("col");
-                colgroup.appendChild(col);
-            }
-
-            // Clear existing Sudoku cells
-            var rows = document.querySelectorAll("#sudoku-board tbody tr");
-            rows.forEach(function(row) {
-                var cells = Array.from(row.querySelectorAll("td"));
-                cells.forEach(function(cell) {
-                    cell.textContent = "";
-                });
-            });
-        });
         document.addEventListener("input", function(event) {
             if (event.target.isContentEditable) {
                 var content = event.target.textContent.trim();
@@ -108,15 +89,33 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.solution) {
-                        var solutionText = data.solution.map(row => row.join(" ")).join("\n");
-                        document.getElementById("solution").textContent = "Solution:\n" + solutionText;
+                        var solutionTable = document.getElementById("solution-board");
+                        solutionTable.innerHTML = ""; // Clear existing solution
+                        // Iterate through the solution and update the solution table
+                        data.solution.forEach(function(solutionRow, rowIndex) {
+                            var row = document.createElement("tr");
+                            solutionTable.appendChild(row);
+                            solutionRow.forEach(function(solutionCell, colIndex) {
+                                var cell = document.createElement("td");
+                                cell.textContent = solutionCell;
+                                // Check if it's a solved digit and add the "solved" class
+                                if (solutionCell !== "0" && solutionCell === puzzle[rowIndex][colIndex]) {
+                                    cell.classList.add("solved");
+                                }
+                                // Check if it's a user-inputted digit and add the "user-input" class
+                                if (solutionCell !== "0" && solutionCell !== puzzle[rowIndex][colIndex]) {
+                                    cell.classList.add("user-input");
+                                }
+                                row.appendChild(cell);
+                            });
+                        });
                     } else {
-                        document.getElementById("solution").textContent = "No solution found.";
+                        document.getElementById("solution-board").textContent = "No solution found.";
                     }
                 })
                 .catch(error => {
                     console.error("Error: " + error);
-                    document.getElementById("solution").textContent = "An error occurred.";
+                    document.getElementById("solution-board").textContent = "An error occurred.";
                 });
         });
 
@@ -129,6 +128,5 @@
         });
     </script>
 </body>
-
 
 </html>

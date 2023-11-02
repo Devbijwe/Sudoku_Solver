@@ -3,31 +3,20 @@ from flask import Flask, render_template, request, jsonify
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'
 
-
-
-@app.route('/')
-def index():
-    size = int(request.args.get("size", 9))
-    size = max(3, min(size, 40))
-
-    # Define the size options
-    size_options = [4, 9, 16, 25, 36, 40]  # Add more size options as needed
-    selected_size = size  # The selected size will be the current 'size'
-
-    
-    return render_template('index.html',  size_options=size_options, selected_size=selected_size)
-
-
 class CSP:
-    def __init__(self, size):
+    def __init__(self, size,puzzle):
         self.size = size
+        self.subgrid_size = int(size**0.5)
         self.variables = [(i, j) for i in range(size) for j in range(size)]
-        self.domains = {var: set(range(1, size + 1)) for var in self.variables}
-        self.constraints = {}
+        self.domains = {var: set(range(1, 10)) if puzzle[var[0]][var[1]] == 0 else {puzzle[var[0]][var[1]]} for var in self.variables}
 
+        self.constraints = {}
+        # self.solution=None
+        # print("var",self.variables)
+        # print("dom",self.domains)
         for var in self.variables:
             self.constraints[var] = self.get_all_constraints(var)
-
+        # print("constraints:",self.constraints)
     def get_all_constraints(self, var):
         constraints = []
         for i in range(self.size):
@@ -36,16 +25,20 @@ class CSP:
             if i != var[1]:
                 constraints.append((var[0], i))
 
-        subgrid_size = int(self.size**0.5)
-        subgrid_row = var[0] // subgrid_size
-        subgrid_col = var[1] // subgrid_size
+        subgrid_row = var[0] // self.subgrid_size
+        subgrid_col = var[1] // self.subgrid_size
 
-        for i in range(subgrid_size * subgrid_row, subgrid_size * (subgrid_row + 1)):
-            for j in range(subgrid_size * subgrid_col, subgrid_size * (subgrid_col + 1)):
+        for i in range(self.subgrid_size * subgrid_row, self.subgrid_size * (subgrid_row + 1)):
+            for j in range(self.subgrid_size * subgrid_col, self.subgrid_size * (subgrid_col + 1)):
                 if (i, j) != var:
                     constraints.append((i, j))
-
+        
         return constraints
+        
+        
+        
+
+    # Rest of the CSP class remains the same
 
     def solve(self):
         assignment = {}
@@ -53,10 +46,13 @@ class CSP:
         return self.solution
 
     def backtrack(self, assignment):
+        # print(len(assignment),len(self.variables))
         if len(assignment) == len(self.variables):
+            # print(assignment)
             return assignment
 
         var = self.select_unassigned_variable(assignment)
+        # print("var:",var)
         for value in self.order_domain_values(var, assignment):
             if self.is_consistent(var, value, assignment):
                 assignment[var] = value
@@ -86,24 +82,47 @@ def convert_solution_to_list(solution, size):
         board[i][j] = value
     return board
 
+@app.route('/')
+def home():
+    selected_size = int(request.args.get("selected_size", 9))
+    selected_size = max(3, min(selected_size, 40))
+
+    # Define the size options
+    size_options = [4, 9, 16, 25, 36, 40]  # Add more size options as needed
+    # selected_size = size  # The selected size will be the current 'size'
+    
+    return render_template('index.html', size_options=size_options, selected_size=selected_size)
+
 @app.route('/solve-sudoku', methods=['POST'])
 def solve_sudoku_route():
     if request.method == 'POST':
         try:
             data = request.get_json()
             puzzle = data.get('puzzle')
-            size = len(puzzle)
-            csp = CSP(size)
-
+            
             # Convert the puzzle to integers
             puzzle = [[int(cell) for cell in row] for row in puzzle]
-
+            
+        #     puzzle = [[5, 3, 0, 0, 7, 0, 0, 0, 0], 
+		# [6, 0, 0, 1, 9, 5, 0, 0, 0], 
+		# [0, 9, 8, 0, 0, 0, 0, 6, 0], 
+		# [8, 0, 0, 0, 6, 0, 0, 0, 3], 
+		# [4, 0, 0, 8, 0, 3, 0, 0, 1], 
+		# [7, 0, 0, 0, 2, 0, 0, 0, 6], 
+		# [0, 6, 0, 0, 0, 0, 2, 8, 0], 
+		# [0, 0, 0, 4, 1, 9, 0, 0, 5], 
+		# [0, 0, 0, 0, 8, 0, 0, 0, 0] 
+		# ] 
+            size = len(puzzle)
+            csp = CSP(size,puzzle)
+            
+            
             # Call your Sudoku solving function
             solution = csp.solve()
-
+            
+            # print(solution)
             if solution:
                 solution_list = convert_solution_to_list(solution, size)
-                print(solution_list)
                 return jsonify({'solution': solution_list})
             else:
                 return jsonify({'error': 'No solution found'})

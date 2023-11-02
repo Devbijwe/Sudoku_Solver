@@ -27,6 +27,9 @@ class CSP:
 		self.domains = Domains 
 		self.constraints = constraints 
 		self.solution = None
+		# print("constraints:",self.constraints)
+		print("var",self.variables)
+		print("dom",self.domains)
 
 	def solve(self): 
 		assignment = {} 
@@ -88,10 +91,14 @@ for i in range(9):
 		
 # Solution 
 print('*'*7,'Solution','*'*7) 
+# print(constraints)
+
 csp = CSP(variables, Domains, constraints) 
 sol = csp.solve() 
+# print(sol)
 
 solution = [[0 for i in range(9)] for i in range(9)] 
+
 for i,j in sol: 
 	solution[i][j]=sol[i,j] 
 	
