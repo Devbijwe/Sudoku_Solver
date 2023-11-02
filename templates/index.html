@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sudoku Solver</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Water+Brush&display=swap');
+        body {
+            background-color: #f6cce5;
+        }
+        
+        #container {
+            text-align: center;
+        }
+        
+        .padd {
+            font-size: 5.6rem;
+            font-family: 'Water Brush', cursive;
+        }
+        
+        table {
+            border-collapse: collapse;
+            font-size: 2em;
+            margin: 0 auto;
+        }
+        
+        colgroup,
+        tbody {
+            border: solid medium;
+        }
+        
+        td {
+            border: solid thin;
+            height: 1.4em;
+            width: 1.4em;
+            text-align: center;
+            padding: 0;
+        }
+        
+        .btns {
+            display: flex;
+            text-align: center;
+            justify-content: center;
+        }
+        
+        button {
+            margin-top: 15px;
+            font-size: 1.5em;
+            background-color: #A288E3;
+            color: white;
+            margin-left: 5px;
+            border: #A288E3;
+            border-radius: 5px;
+            padding: 5px 10px;
+        }
+        
+        button:hover {
+            color: #A288E3;
+            background-color: white;
+            outline: #A288E3;
+            transition: all 1s ease;
+            cursor: pointer;
+        }
+        
+        @media screen and (max-width: 460px) {
+            .padd {
+                font-size: 4.2rem;
+            }
+            table {
+                font-size: 1.5em;
+            }
+            button {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="container">
+        <h1 class="padd">Sudoku Solver</h1>
+        <form id="sudoku-form">
+            <label for="sudoku-size">Select Sudoku Board Size:</label>
+            <select id="sudoku-size">
+                {% for option in size_options %}
+                    <option value="{{ option }}" {% if size == option %}selected{% endif %}>{{ option }}x{{ option }}</option>
+                {% endfor %}
+            </select>
+
+
+            <br>
+            <table id="sudoku-board" class="table-auto mx-auto">
+                <colgroup id="colgroup"></colgroup>
+                <tbody>
+                    {% for row in range(selected_size) %}
+                    <tr>
+                        {% for col in range(selected_size) %}
+                        <td contenteditable="true" class="w-10 h-10 text-center border border-gray-300 rounded focus:ring-2 focus:ring-blue-300 focus:outline-none" pattern="[1-9]" title="Please enter a single digit between 1 and 9">
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+
+            </table>
+            <div class="btns">
+                <div>
+                    <button id="solve-button" type="button">Solve</button>
+                </div>
+                <div>
+                    <button id="clear-button" type="button">Clear board</button>
+                </div>
+            </div>
+        </form>
+        <div id="solution" class="text-center font-bold mt-4"></div>
+    </div>
+    <script>
+        const select = document.getElementById("sudoku-size");
+        select.addEventListener("change", function() {
+            const selectedSize = select.value;
+            window.location.href = `/?size=${selectedSize}`;
+        });
+    </script>
+
+
+    <script>
+        document.getElementById("sudoku-size").addEventListener("change", function() {
+            var size = this.value;
+            var colgroup = document.getElementById("colgroup");
+            colgroup.innerHTML = ""; // Clear existing columns
+
+            for (let i = 0; i < size; i++) {
+                var col = document.createElement("col");
+                colgroup.appendChild(col);
+            }
+
+            // Clear existing Sudoku cells
+            var rows = document.querySelectorAll("#sudoku-board tbody tr");
+            rows.forEach(function(row) {
+                var cells = Array.from(row.querySelectorAll("td"));
+                cells.forEach(function(cell) {
+                    cell.textContent = "";
+                });
+            });
+        });
+        document.addEventListener("input", function(event) {
+            if (event.target.isContentEditable) {
+                var content = event.target.textContent.trim();
+                if (content.length > 1 || (content.length === 1 && (content < "1" || content > "9"))) {
+                    event.target.textContent = "";
+                }
+            }
+        });
+
+        document.getElementById("solve-button").addEventListener("click", function() {
+            var puzzle = [];
+            var rows = document.querySelectorAll("#sudoku-board tbody tr");
+            rows.forEach(function(row) {
+                var cells = Array.from(row.querySelectorAll("td"));
+                puzzle.push(cells.map(function(cell) {
+                    return cell.textContent.trim() || "0";
+                }));
+            });
+
+            fetch("/solve-sudoku", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        puzzle: puzzle
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.solution) {
+                        var solutionText = data.solution.map(row => row.join(" ")).join("\n");
+                        document.getElementById("solution").textContent = "Solution:\n" + solutionText;
+                    } else {
+                        document.getElementById("solution").textContent = "No solution found.";
+                    }
+                })
+                .catch(error => {
+                    console.error("Error: " + error);
+                    document.getElementById("solution").textContent = "An error occurred.";
+                });
+        });
+
+        document.getElementById("clear-button").addEventListener("click", function() {
+            document.getElementById("solution").textContent = "";
+            var cells = document.querySelectorAll("#sudoku-board td");
+            cells.forEach(function(cell) {
+                cell.textContent = "";
+            });
+        });
+    </script>
+</body>
+
+
+</html>
