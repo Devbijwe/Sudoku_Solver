@@ -27,7 +27,7 @@ class CSP:
 
         subgrid_row = var[0] // self.subgrid_size
         subgrid_col = var[1] // self.subgrid_size
-
+        
         for i in range(self.subgrid_size * subgrid_row, self.subgrid_size * (subgrid_row + 1)):
             for j in range(self.subgrid_size * subgrid_col, self.subgrid_size * (subgrid_col + 1)):
                 if (i, j) != var:
@@ -85,10 +85,10 @@ def convert_solution_to_list(solution, size):
 @app.route('/')
 def home():
     selected_size = int(request.args.get("selected_size", 9))
-    selected_size = max(3, min(selected_size, 40))
+    selected_size = max(3, min(selected_size, 36))
 
     # Define the size options
-    size_options = [4, 9, 16, 25, 36, 40]  # Add more size options as needed
+    size_options = [4, 9, 16, 25, 36]  # Add more size options as needed
     # selected_size = size  # The selected size will be the current 'size'
     
     return render_template('index.html', size_options=size_options, selected_size=selected_size)
@@ -102,7 +102,7 @@ def solve_sudoku_route():
             
             # Convert the puzzle to integers
             puzzle = [[int(cell) for cell in row] for row in puzzle]
-            
+            print(puzzle)
         #     puzzle = [[5, 3, 0, 0, 7, 0, 0, 0, 0], 
 		# [6, 0, 0, 1, 9, 5, 0, 0, 0], 
 		# [0, 9, 8, 0, 0, 0, 0, 6, 0], 

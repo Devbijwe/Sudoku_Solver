@@ -31,7 +31,7 @@
                         {% for row in range(selected_size) %}
                         <tr>
                             {% for col in range(selected_size) %}
-                            <td contenteditable="true" class="" pattern="[1-9]" title="Please enter a single digit between 1 and 9">
+                            <td contenteditable="true" class="" pattern="[1-9]" title="Please enter a digit between 1 and {{selected_size}}">
                             </td>
                             {% endfor %}
                         </tr>
@@ -61,7 +61,7 @@
         document.addEventListener("input", function(event) {
             if (event.target.isContentEditable) {
                 var content = event.target.textContent.trim();
-                if (content.length > 1 || (content.length === 1 && (content < "1" || content > "9"))) {
+                if (content.length > 1 || (content.length === ("{{selected_size}}").length && (content < "1" || content > "{{selected_size}}"))) {
                     event.target.textContent = "";
                 }
             }
